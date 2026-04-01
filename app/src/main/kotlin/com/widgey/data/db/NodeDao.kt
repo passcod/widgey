@@ -46,8 +46,8 @@ interface NodeDao {
     @Query("UPDATE nodes SET note = :note, local_modified_at = :localModifiedAt, is_dirty = 1 WHERE id = :id")
     suspend fun updateNoteLocally(id: String, note: String?, localModifiedAt: Long)
 
-    @Query("UPDATE nodes SET note = :note, remote_modified_at = :remoteModifiedAt WHERE id = :id AND is_dirty = 0")
-    suspend fun updateFromRemote(id: String, note: String?, remoteModifiedAt: Long)
+    @Query("UPDATE nodes SET name = :name, note = :note, remote_modified_at = :remoteModifiedAt WHERE id = :id AND is_dirty = 0")
+    suspend fun updateFromRemote(id: String, name: String, note: String?, remoteModifiedAt: Long)
 
     @Query("UPDATE nodes SET completed = :completed, completed_at = :completedAt WHERE id = :id")
     suspend fun updateCompletionStatus(id: String, completed: Boolean, completedAt: Long?)

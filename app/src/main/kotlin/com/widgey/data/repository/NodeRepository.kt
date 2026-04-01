@@ -116,7 +116,7 @@ class NodeRepository(
                 } else {
                     // No local changes, safe to update from remote
                     if ((dto.modifiedAt ?: 0) > existing.remoteModifiedAt) {
-                        nodeDao.updateFromRemote(nodeId, dto.note, dto.modifiedAt ?: 0)
+                        nodeDao.updateFromRemote(nodeId, dto.name, dto.note, dto.modifiedAt ?: 0)
                     }
                 }
                 FetchResult.Success
@@ -173,7 +173,7 @@ class NodeRepository(
                         nodeDao.updateCompletionStatus(node.id, node.completed, node.completedAt)
                         if (!existing.isDirty && node.remoteModifiedAt > existing.remoteModifiedAt) {
                             Log.d(TAG, "fetchTopLevelNodes: updating node ${node.id} from remote")
-                            nodeDao.updateFromRemote(node.id, node.note, node.remoteModifiedAt)
+                            nodeDao.updateFromRemote(node.id, node.name, node.note, node.remoteModifiedAt)
                         }
                     }
                 }
