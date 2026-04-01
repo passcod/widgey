@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import com.widgey.R
 import com.widgey.WidgeyApp
 import com.widgey.sync.SyncManager
 import kotlinx.coroutines.CoroutineScope
