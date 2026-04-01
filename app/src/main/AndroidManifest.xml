@@ -38,6 +38,12 @@
                 android:resource="@xml/widget_info" />
         </receiver>
 
+        <!-- Widget RemoteViews Service for scrollable text -->
+        <service
+            android:name=".widget.WidgetTextService"
+            android:permission="android.permission.BIND_REMOTEVIEWS"
+            android:exported="false" />
+
         <!-- Widget Configuration Activity -->
         <activity
             android:name=".widget.WidgetConfigActivity"

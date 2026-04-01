@@ -6,12 +6,19 @@
     android:background="?android:attr/colorBackground"
     android:padding="8dp">
 
+    <ListView
+        android:id="@+id/widget_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:divider="@null"
+        android:dividerHeight="0dp"
+        android:scrollbars="none"
+        android:visibility="gone" />
+
     <TextView
         android:id="@+id/widget_text"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:ellipsize="end"
-        android:gravity="top|start"
+        android:layout_height="wrap_content"
         android:textColor="?android:attr/textColorPrimary"
         android:textSize="18sp"
         android:fontFamily="sans-serif"

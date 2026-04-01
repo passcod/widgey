@@ -1,9 +1,12 @@
 package com.widgey.widget
 
+import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
+import android.view.View
 import android.widget.RemoteViews
 import com.widgey.R
 import com.widgey.WidgeyApp
@@ -29,6 +32,10 @@ object WidgetUpdater {
                 putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, widgetIds)
             }
             context.sendBroadcast(intent)
+            // Notify each ListView that its data may have changed
+            for (id in widgetIds) {
+                appWidgetManager.notifyAppWidgetViewDataChanged(id, R.id.widget_list)
+            }
         }
     }
 
@@ -37,9 +44,10 @@ object WidgetUpdater {
      */
     fun updateWidget(context: Context, appWidgetId: Int) {
         val appWidgetManager = AppWidgetManager.getInstance(context)
-        CoroutineScope(Dispatchers.Main).launch {
+        CoroutineScope(Dispatchers.IO).launch {
             val views = buildRemoteViews(context, appWidgetId)
             appWidgetManager.updateAppWidget(appWidgetId, views)
+            appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetId, R.id.widget_list)
         }
     }
 
@@ -50,88 +58,67 @@ object WidgetUpdater {
         val app = context.applicationContext as WidgeyApp
         val views = RemoteViews(context.packageName, R.layout.widget_layout)
 
-        // Check if we have an API key
+        // No API key
         val hasApiKey = app.settingsRepository.hasApiKey()
         if (!hasApiKey) {
+            views.setViewVisibility(R.id.widget_list, View.GONE)
+            views.setViewVisibility(R.id.widget_text, View.VISIBLE)
             views.setTextViewText(R.id.widget_text, context.getString(R.string.widget_no_api_key))
-            views.setOnClickPendingIntent(
-                R.id.widget_container,
-                createConfigPendingIntent(context, appWidgetId)
-            )
+            views.setOnClickPendingIntent(R.id.widget_container, nodeSelectionIntent(context, appWidgetId))
             return views
         }
 
-        // Get widget config
+        // No node configured
         val config = app.database.widgetConfigDao().getConfig(appWidgetId)
         val nodeId = config?.nodeId
-
         if (nodeId == null) {
-            // Widget is unconfigured or discarded - show empty state
+            views.setViewVisibility(R.id.widget_list, View.GONE)
+            views.setViewVisibility(R.id.widget_text, View.VISIBLE)
             views.setTextViewText(R.id.widget_text, "")
-            views.setOnClickPendingIntent(
-                R.id.widget_container,
-                createNodeSelectionPendingIntent(context, appWidgetId)
-            )
+            views.setOnClickPendingIntent(R.id.widget_container, nodeSelectionIntent(context, appWidgetId))
             return views
         }
 
-        // Get node content
-        val node = app.database.nodeDao().getById(nodeId)
-        if (node != null) {
-            views.setTextViewText(R.id.widget_text, node.note ?: "")
-            views.setOnClickPendingIntent(
-                R.id.widget_container,
-                createEditorPendingIntent(context, appWidgetId, nodeId)
-            )
-        } else {
-            // Node not in cache yet - show empty and tap to configure
-            views.setTextViewText(R.id.widget_text, "")
-            views.setOnClickPendingIntent(
-                R.id.widget_container,
-                createEditorPendingIntent(context, appWidgetId, nodeId)
-            )
+        // Configured — use ListView via RemoteViewsService
+        val editorPendingIntent = editorIntent(context, appWidgetId, nodeId)
+
+        val serviceIntent = Intent(context, WidgetTextService::class.java).apply {
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            // Unique URI per widget so each gets its own factory instance
+            data = Uri.fromParts("widgey", appWidgetId.toString(), null)
         }
+
+        views.setViewVisibility(R.id.widget_text, View.GONE)
+        views.setViewVisibility(R.id.widget_list, View.VISIBLE)
+        views.setRemoteAdapter(R.id.widget_list, serviceIntent)
+        // Tapping any list item opens the editor
+        views.setPendingIntentTemplate(R.id.widget_list, editorPendingIntent)
+        // Tapping empty space in the widget (padding, etc.) also opens editor
+        views.setOnClickPendingIntent(R.id.widget_container, editorPendingIntent)
 
         return views
     }
 
-    private fun createConfigPendingIntent(context: Context, appWidgetId: Int): android.app.PendingIntent {
-        val intent = Intent(context, WidgetConfigActivity::class.java).apply {
-            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-        }
-        return android.app.PendingIntent.getActivity(
-            context,
-            appWidgetId,
-            intent,
-            android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
-        )
-    }
-
-    private fun createNodeSelectionPendingIntent(context: Context, appWidgetId: Int): android.app.PendingIntent {
+    private fun nodeSelectionIntent(context: Context, appWidgetId: Int): PendingIntent {
         val intent = Intent(context, NodeSelectionActivity::class.java).apply {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
-        return android.app.PendingIntent.getActivity(
-            context,
-            appWidgetId,
-            intent,
-            android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+        return PendingIntent.getActivity(
+            context, appWidgetId, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
     }
 
-    private fun createEditorPendingIntent(context: Context, appWidgetId: Int, nodeId: String): android.app.PendingIntent {
+    private fun editorIntent(context: Context, appWidgetId: Int, nodeId: String): PendingIntent {
         val intent = Intent(context, EditorActivity::class.java).apply {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             putExtra(EditorActivity.EXTRA_NODE_ID, nodeId)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
-        return android.app.PendingIntent.getActivity(
-            context,
-            appWidgetId,
-            intent,
-            android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+        return PendingIntent.getActivity(
+            context, appWidgetId, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
     }
 }
