@@ -28,6 +28,9 @@ class EditorActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_NODE_ID = "node_id"
         private const val SAVE_DEBOUNCE_MS = 500L
+
+        private fun String.stripHtml(): String =
+            HtmlCompat.fromHtml(this, HtmlCompat.FROM_HTML_MODE_LEGACY).toString().trim()
     }
 
     private lateinit var binding: ActivityEditorBinding
@@ -295,8 +298,5 @@ class EditorActivity : AppCompatActivity() {
         SYNCED, SYNCING, PENDING, ERROR
     }
 
-    companion object {
-        private fun String.stripHtml(): String =
-            HtmlCompat.fromHtml(this, HtmlCompat.FROM_HTML_MODE_LEGACY).toString().trim()
-    }
+
 }
