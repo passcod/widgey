@@ -51,7 +51,7 @@ class WidgeyProvider : AppWidgetProvider() {
     }
 
     override fun onDisabled(context: Context) {
-        Log.d(TAG, "onDisabled: Last widget removed")
+        Log.d(TAG, "onDisabled: Last widget removedx")
 
         // Stop periodic sync when last widget is removed
         val syncManager = SyncManager(context)

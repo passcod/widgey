@@ -97,8 +97,8 @@ class EditorActivity : AppCompatActivity() {
                 binding.progressBar.visibility = View.GONE
                 isLoading = false
 
-                // Move cursor to end
-                binding.noteInput.setSelection(binding.noteInput.text?.length ?: 0)
+                // Place cursor at start of note
+                binding.noteInput.setSelection(0)
 
                 // Check if node exists remotely
                 checkNodeExistsRemotely()
@@ -113,7 +113,7 @@ class EditorActivity : AppCompatActivity() {
                             binding.noteInput.isEnabled = true
                             binding.progressBar.visibility = View.GONE
                             isLoading = false
-                            binding.noteInput.setSelection(binding.noteInput.text?.length ?: 0)
+                            binding.noteInput.setSelection(0)
                         }
                     }
 
