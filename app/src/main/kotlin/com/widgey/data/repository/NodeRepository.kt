@@ -96,7 +96,8 @@ class NodeRepository(
                             priority = dto.priority,
                             remoteModifiedAt = dto.modifiedAt ?: 0,
                             localModifiedAt = null,
-                            isDirty = false
+                            isDirty = false,
+                            completed = dto.completed
                         )
                     )
                 } else if (existing.isDirty) {
@@ -153,7 +154,8 @@ class NodeRepository(
                         priority = dto.priority,
                         remoteModifiedAt = dto.modifiedAt ?: 0,
                         localModifiedAt = null,
-                        isDirty = false
+                        isDirty = false,
+                        completed = dto.completed
                     )
                 }
                 // Only insert nodes that don't exist locally or aren't dirty
@@ -212,7 +214,8 @@ class NodeRepository(
                                 priority = dto.priority,
                                 remoteModifiedAt = dto.modifiedAt ?: 0,
                                 localModifiedAt = null,
-                                isDirty = false
+                                isDirty = false,
+                                completed = dto.completed
                             )
                         )
                         CreateResult.Success(nodeId)

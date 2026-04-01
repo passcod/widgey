@@ -1,5 +1,7 @@
 package com.widgey.ui.editor
 
+import androidx.core.text.HtmlCompat
+
 import android.appwidget.AppWidgetManager
 import android.os.Bundle
 import android.os.Handler
@@ -86,7 +88,7 @@ class EditorActivity : AppCompatActivity() {
             val node = app.database.nodeDao().getById(nodeId!!)
 
             if (node != null) {
-                binding.nodeTitle.text = node.name.ifEmpty { getString(R.string.editor_title) }
+                binding.nodeTitle.text = node.name.stripHtml().ifEmpty { getString(R.string.editor_title) }
                 binding.noteInput.setText(node.note ?: "")
                 binding.noteInput.isEnabled = true
                 binding.progressBar.visibility = View.GONE
@@ -103,7 +105,7 @@ class EditorActivity : AppCompatActivity() {
                     is NodeRepository.FetchResult.Success -> {
                         val fetchedNode = app.database.nodeDao().getById(nodeId!!)
                         if (fetchedNode != null) {
-                            binding.nodeTitle.text = fetchedNode.name.ifEmpty { getString(R.string.editor_title) }
+                            binding.nodeTitle.text = fetchedNode.name.stripHtml().ifEmpty { getString(R.string.editor_title) }
                             binding.noteInput.setText(fetchedNode.note ?: "")
                             binding.noteInput.isEnabled = true
                             binding.progressBar.visibility = View.GONE
@@ -291,5 +293,10 @@ class EditorActivity : AppCompatActivity() {
 
     private enum class SyncStatus {
         SYNCED, SYNCING, PENDING, ERROR
+    }
+
+    companion object {
+        private fun String.stripHtml(): String =
+            HtmlCompat.fromHtml(this, HtmlCompat.FROM_HTML_MODE_LEGACY).toString().trim()
     }
 }

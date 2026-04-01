@@ -30,6 +30,8 @@ class NodeSelectionActivity : AppCompatActivity() {
     private lateinit var adapter: NodeListAdapter
     private val app: WidgeyApp by lazy { application as WidgeyApp }
     private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
+    private var showCompleted = false
+    private var allNodes: List<NodeEntity> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,6 +59,12 @@ class NodeSelectionActivity : AppCompatActivity() {
         }
         binding.nodeList.layoutManager = LinearLayoutManager(this)
         binding.nodeList.adapter = adapter
+
+        // Setup completed toggle
+        binding.showCompletedToggle.setOnCheckedChangeListener { _, isChecked ->
+            showCompleted = isChecked
+            applyFilter()
+        }
 
         // Setup create button
         binding.createButton.setOnClickListener {
@@ -99,7 +107,8 @@ class NodeSelectionActivity : AppCompatActivity() {
             val cachedNodes = app.nodeRepository.getTopLevelNodes()
             Log.d(TAG, "loadNodes: cache has ${cachedNodes.size} top-level nodes")
             if (cachedNodes.isNotEmpty()) {
-                showNodes(cachedNodes)
+                allNodes = cachedNodes
+                applyFilter()
             }
 
             // Then fetch from API
@@ -108,7 +117,8 @@ class NodeSelectionActivity : AppCompatActivity() {
                 is NodeRepository.FetchResult.Success -> {
                     val nodes = app.nodeRepository.getTopLevelNodes()
                     Log.d(TAG, "loadNodes: API fetch succeeded, now have ${nodes.size} nodes")
-                    showNodes(nodes)
+                    allNodes = nodes
+                    applyFilter()
                 }
 
                 is NodeRepository.FetchResult.Unauthorized -> {
@@ -121,21 +131,21 @@ class NodeSelectionActivity : AppCompatActivity() {
                 is NodeRepository.FetchResult.NetworkError -> {
                     val r = result as NodeRepository.FetchResult.NetworkError
                     Log.e(TAG, "loadNodes: network error", r.exception)
-                    if (cachedNodes.isEmpty()) {
+                    if (allNodes.isEmpty()) {
                         showError(getString(R.string.error_network))
                     }
                 }
 
                 is NodeRepository.FetchResult.NotFound -> {
                     Log.e(TAG, "loadNodes: API returned NotFound for top-level nodes")
-                    if (cachedNodes.isEmpty()) {
+                    if (allNodes.isEmpty()) {
                         showError(getString(R.string.node_selection_error))
                     }
                 }
 
                 is NodeRepository.FetchResult.Error -> {
                     Log.e(TAG, "loadNodes: API error: ${result.message}")
-                    if (cachedNodes.isEmpty()) {
+                    if (allNodes.isEmpty()) {
                         showError(getString(R.string.node_selection_error))
                     }
                 }
@@ -148,6 +158,11 @@ class NodeSelectionActivity : AppCompatActivity() {
         binding.nodeList.visibility = View.GONE
         binding.emptyView.visibility = View.GONE
         binding.errorView.visibility = View.GONE
+    }
+
+    private fun applyFilter() {
+        val filtered = if (showCompleted) allNodes else allNodes.filter { !it.completed }
+        showNodes(filtered)
     }
 
     private fun showNodes(nodes: List<NodeEntity>) {

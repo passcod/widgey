@@ -19,6 +19,9 @@ interface NodeDao {
     @Query("SELECT * FROM nodes WHERE parent_id IS NULL ORDER BY priority ASC")
     suspend fun getTopLevelNodes(): List<NodeEntity>
 
+    @Query("SELECT * FROM nodes WHERE parent_id IS NULL AND completed = 0 ORDER BY priority ASC")
+    suspend fun getTopLevelActiveNodes(): List<NodeEntity>
+
     @Query("SELECT * FROM nodes WHERE parent_id IS NULL ORDER BY priority ASC")
     fun observeTopLevelNodes(): Flow<List<NodeEntity>>
 

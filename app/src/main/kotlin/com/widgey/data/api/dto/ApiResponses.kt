@@ -11,6 +11,7 @@ data class NodeDto(
     @SerialName("parent_id")
     val parentId: String? = null,
     val priority: Int = 0,
+    val completed: Boolean = false,
     val data: NodeDataDto? = null,
     val createdAt: Long = 0,
     val modifiedAt: Long? = null,

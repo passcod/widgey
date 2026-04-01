@@ -29,5 +29,8 @@ data class NodeEntity(
     val localModifiedAt: Long? = null,
 
     @ColumnInfo(name = "is_dirty")
-    val isDirty: Boolean = false
+    val isDirty: Boolean = false,
+
+    @ColumnInfo(name = "completed")
+    val completed: Boolean = false
 )

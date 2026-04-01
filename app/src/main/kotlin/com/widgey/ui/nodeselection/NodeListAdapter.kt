@@ -2,6 +2,7 @@ package com.widgey.ui.nodeselection
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.text.HtmlCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -31,13 +32,18 @@ class NodeListAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(node: NodeEntity) {
-            binding.nodeName.text = node.name.ifEmpty { "(Untitled)" }
-            binding.nodePreview.text = node.note?.take(100) ?: ""
+            binding.nodeName.text = node.name.stripHtml().ifEmpty { "(Untitled)" }
+            binding.nodePreview.text = node.note?.stripHtml()?.take(100) ?: ""
 
             binding.root.setOnClickListener {
                 onNodeClick(node)
             }
         }
+    }
+
+    companion object {
+        private fun String.stripHtml(): String =
+            HtmlCompat.fromHtml(this, HtmlCompat.FROM_HTML_MODE_LEGACY).toString().trim()
     }
 
     private class NodeDiffCallback : DiffUtil.ItemCallback<NodeEntity>() {
