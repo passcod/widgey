@@ -98,7 +98,7 @@ object HtmlFormatter {
         }
         is StrikethroughSpan -> "<s>"
         is TypefaceSpan      -> if (span.family == "monospace") "<code>" else null
-        is URLSpan           -> "<a href=\"${span.url.replace("\"", "&quot;"")}\">"
+        is URLSpan           -> "<a href=\"${span.url.replace("\"", "&quot;")}\">"
         else                 -> null
     }
 
