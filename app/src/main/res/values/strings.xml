@@ -63,6 +63,15 @@
         name="node_deleted_discard_confirm"
     >Discard this note? The widget will become empty.</string>
 
+    <!-- Formatting toolbar -->
+    <string name="format_bold">B</string>
+    <string name="format_italic">I</string>
+    <string name="format_strikethrough">S</string>
+    <string name="format_code">&lt;/&gt;</string>
+    <string name="format_link">Link</string>
+    <string name="format_link_url_hint">URL</string>
+    <string name="format_link_title">Insert Link</string>
+
     <!-- Common -->
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>

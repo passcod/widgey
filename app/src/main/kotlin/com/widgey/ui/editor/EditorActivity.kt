@@ -1,23 +1,29 @@
 package com.widgey.ui.editor
 
-import androidx.core.text.HtmlCompat
-
 import android.appwidget.AppWidgetManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.text.Editable
+import android.text.Spannable
 import android.text.TextWatcher
+import android.text.style.StrikethroughSpan
+import android.text.style.StyleSpan
+import android.text.style.TypefaceSpan
+import android.text.style.URLSpan
+import android.graphics.Typeface
 import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.textfield.TextInputEditText
 import com.widgey.R
 import com.widgey.WidgeyApp
 import com.widgey.data.entity.WidgetConfigEntity
 import com.widgey.data.repository.NodeRepository
 import com.widgey.databinding.ActivityEditorBinding
 import com.widgey.sync.SyncManager
+import com.widgey.util.HtmlFormatter
 import com.widgey.widget.WidgetUpdater
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
@@ -28,9 +34,6 @@ class EditorActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_NODE_ID = "node_id"
         private const val SAVE_DEBOUNCE_MS = 500L
-
-        private fun String.stripHtml(): String =
-            HtmlCompat.fromHtml(this, HtmlCompat.FROM_HTML_MODE_LEGACY).toString().trim()
     }
 
     private lateinit var binding: ActivityEditorBinding
@@ -71,15 +74,64 @@ class EditorActivity : AppCompatActivity() {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
-                if (!isLoading) {
-                    scheduleSave()
-                }
+                if (!isLoading) scheduleSave()
             }
         })
 
-        binding.backButton.setOnClickListener {
-            onBackPressed()
+        binding.backButton.setOnClickListener { onBackPressed() }
+
+        binding.formatBold.setOnClickListener { toggleSpan<StyleSpan> { StyleSpan(Typeface.BOLD) } }
+        binding.formatItalic.setOnClickListener { toggleSpan<StyleSpan> { StyleSpan(Typeface.ITALIC) } }
+        binding.formatStrikethrough.setOnClickListener { toggleSpan<StrikethroughSpan> { StrikethroughSpan() } }
+        binding.formatCode.setOnClickListener { toggleSpan<TypefaceSpan> { TypefaceSpan("monospace") } }
+        binding.formatLink.setOnClickListener { showLinkDialog() }
+    }
+
+    // Toggle a span over the current selection. Uses the reified type T to find and remove
+    // existing spans of the same type, or adds a new one if none exist.
+    private inline fun <reified T : Any> toggleSpan(crossinline create: () -> T) {
+        val start = binding.noteInput.selectionStart.coerceAtLeast(0)
+        val end = binding.noteInput.selectionEnd.coerceAtLeast(0)
+        if (start == end) return
+
+        val text = binding.noteInput.editableText
+        val existing = text.getSpans(start, end, T::class.java)
+        if (existing.isNotEmpty()) {
+            existing.forEach { text.removeSpan(it) }
+        } else {
+            text.setSpan(create(), start, end, Spannable.SPAN_EXCLUSIVE_INCLUSIVE)
         }
+        scheduleSave()
+    }
+
+    private fun showLinkDialog() {
+        val start = binding.noteInput.selectionStart.coerceAtLeast(0)
+        val end = binding.noteInput.selectionEnd.coerceAtLeast(0)
+        if (start == end) return
+
+        val dialogView = layoutInflater.inflate(R.layout.dialog_insert_link, null)
+        val urlInput = dialogView.findViewById<TextInputEditText>(R.id.link_url_input)
+
+        // Pre-fill if there's an existing URLSpan on the selection
+        val text = binding.noteInput.editableText
+        text.getSpans(start, end, URLSpan::class.java).firstOrNull()?.let {
+            urlInput.setText(it.url)
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.format_link_title)
+            .setView(dialogView)
+            .setPositiveButton(R.string.ok) { _, _ ->
+                val url = urlInput.text?.toString()?.trim() ?: return@setPositiveButton
+                // Remove any existing URLSpans in range
+                text.getSpans(start, end, URLSpan::class.java).forEach { text.removeSpan(it) }
+                if (url.isNotEmpty()) {
+                    text.setSpan(URLSpan(url), start, end, Spannable.SPAN_EXCLUSIVE_INCLUSIVE)
+                }
+                scheduleSave()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
     private fun loadNode() {
@@ -91,38 +143,28 @@ class EditorActivity : AppCompatActivity() {
             val node = app.database.nodeDao().getById(nodeId!!)
 
             if (node != null) {
-                binding.nodeTitle.text = node.name.stripHtml().ifEmpty { getString(R.string.editor_title) }
-                binding.noteInput.setText(node.note ?: "")
+                binding.nodeTitle.text = HtmlFormatter.stripHtml(node.name).ifEmpty { getString(R.string.editor_title) }
+                binding.noteInput.setText(HtmlFormatter.toSpanned(node.note), android.widget.TextView.BufferType.EDITABLE)
                 binding.noteInput.isEnabled = true
                 binding.progressBar.visibility = View.GONE
                 isLoading = false
-
-                // Place cursor at start of note
                 binding.noteInput.setSelection(0)
-
-                // Check if node exists remotely
                 checkNodeExistsRemotely()
             } else {
-                // Try to fetch from API
                 when (val result = app.nodeRepository.fetchNode(nodeId!!)) {
                     is NodeRepository.FetchResult.Success -> {
                         val fetchedNode = app.database.nodeDao().getById(nodeId!!)
                         if (fetchedNode != null) {
-                            binding.nodeTitle.text = fetchedNode.name.stripHtml().ifEmpty { getString(R.string.editor_title) }
-                            binding.noteInput.setText(fetchedNode.note ?: "")
+                            binding.nodeTitle.text = HtmlFormatter.stripHtml(fetchedNode.name).ifEmpty { getString(R.string.editor_title) }
+                            binding.noteInput.setText(HtmlFormatter.toSpanned(fetchedNode.note), android.widget.TextView.BufferType.EDITABLE)
                             binding.noteInput.isEnabled = true
                             binding.progressBar.visibility = View.GONE
                             isLoading = false
                             binding.noteInput.setSelection(0)
                         }
                     }
-
-                    is NodeRepository.FetchResult.NotFound -> {
-                        showNodeDeletedDialog()
-                    }
-
+                    is NodeRepository.FetchResult.NotFound -> showNodeDeletedDialog()
                     else -> {
-                        // Show error but allow editing if we have cached content
                         binding.progressBar.visibility = View.GONE
                         binding.noteInput.isEnabled = true
                         isLoading = false
@@ -135,9 +177,7 @@ class EditorActivity : AppCompatActivity() {
 
     private fun checkNodeExistsRemotely() {
         lifecycleScope.launch {
-            val exists = app.nodeRepository.nodeExistsRemotely(nodeId!!)
-            if (!exists) {
-                // Node was deleted on server
+            if (!app.nodeRepository.nodeExistsRemotely(nodeId!!)) {
                 showNodeDeletedDialog()
             }
         }
@@ -147,12 +187,8 @@ class EditorActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle(R.string.node_deleted_title)
             .setMessage(R.string.node_deleted_message)
-            .setPositiveButton(R.string.node_deleted_recreate) { _, _ ->
-                recreateNode()
-            }
-            .setNegativeButton(R.string.node_deleted_discard) { _, _ ->
-                showDiscardConfirmation()
-            }
+            .setPositiveButton(R.string.node_deleted_recreate) { _, _ -> recreateNode() }
+            .setNegativeButton(R.string.node_deleted_discard) { _, _ -> showDiscardConfirmation() }
             .setCancelable(false)
             .show()
     }
@@ -160,12 +196,8 @@ class EditorActivity : AppCompatActivity() {
     private fun showDiscardConfirmation() {
         AlertDialog.Builder(this)
             .setMessage(R.string.node_deleted_discard_confirm)
-            .setPositiveButton(R.string.ok) { _, _ ->
-                discardWidget()
-            }
-            .setNegativeButton(R.string.cancel) { _, _ ->
-                showNodeDeletedDialog()
-            }
+            .setPositiveButton(R.string.ok) { _, _ -> discardWidget() }
+            .setNegativeButton(R.string.cancel) { _, _ -> showNodeDeletedDialog() }
             .show()
     }
 
@@ -176,29 +208,20 @@ class EditorActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val cachedNode = app.database.nodeDao().getById(nodeId!!)
             val name = cachedNode?.name ?: "Untitled"
-            val note = binding.noteInput.text?.toString() ?: cachedNode?.note
+            val note = HtmlFormatter.toHtml(binding.noteInput.editableText)
 
             when (val result = app.nodeRepository.createTopLevelNode(name, note)) {
                 is NodeRepository.CreateResult.Success -> {
-                    // Update widget config with new node ID
                     val newNodeId = result.nodeId
                     app.database.widgetConfigDao().updateNodeId(appWidgetId, newNodeId)
-
-                    // Update our reference
                     nodeId = newNodeId
-
-                    // Update widget
                     WidgetUpdater.updateWidget(this@EditorActivity, appWidgetId)
-
                     binding.progressBar.visibility = View.GONE
                     binding.noteInput.isEnabled = true
                     isLoading = false
-
                     updateSyncStatus(SyncStatus.SYNCED)
                 }
-
                 else -> {
-                    // Failed to recreate - show error
                     binding.progressBar.visibility = View.GONE
                     updateSyncStatus(SyncStatus.ERROR)
                     showNodeDeletedDialog()
@@ -209,45 +232,32 @@ class EditorActivity : AppCompatActivity() {
 
     private fun discardWidget() {
         lifecycleScope.launch {
-            // Clear the node association but keep the widget
             app.database.widgetConfigDao().insert(
                 WidgetConfigEntity(widgetId = appWidgetId, nodeId = null)
             )
-
-            // Update widget to show empty state
             WidgetUpdater.updateWidget(this@EditorActivity, appWidgetId)
-
             finish()
         }
     }
 
     private fun scheduleSave() {
         saveRunnable?.let { saveHandler.removeCallbacks(it) }
-
         updateSyncStatus(SyncStatus.PENDING)
         pendingSave = true
-
-        saveRunnable = Runnable {
-            saveNote()
-        }
+        saveRunnable = Runnable { saveNote() }
         saveHandler.postDelayed(saveRunnable!!, SAVE_DEBOUNCE_MS)
     }
 
     private fun saveNote() {
-        val note = binding.noteInput.text?.toString()
+        val note = HtmlFormatter.toHtml(binding.noteInput.editableText)
         val currentNodeId = nodeId ?: return
 
         pendingSave = false
         updateSyncStatus(SyncStatus.SYNCING)
 
         lifecycleScope.launch {
-            // Save locally
             app.nodeRepository.updateNoteLocally(currentNodeId, note)
-
-            // Update widget
             WidgetUpdater.updateWidget(this@EditorActivity, appWidgetId)
-
-            // Trigger sync
             SyncManager(this@EditorActivity).triggerPushSync()
         }
     }
@@ -274,14 +284,12 @@ class EditorActivity : AppCompatActivity() {
             SyncStatus.PENDING -> getString(R.string.editor_sync_status_pending) to R.color.sync_pending
             SyncStatus.ERROR -> getString(R.string.editor_sync_status_error) to R.color.sync_error
         }
-
         binding.syncStatus.text = text
         binding.syncStatus.setTextColor(getColor(color))
     }
 
     override fun onPause() {
         super.onPause()
-        // Save immediately when leaving
         if (pendingSave) {
             saveRunnable?.let { saveHandler.removeCallbacks(it) }
             saveNote()
@@ -294,9 +302,5 @@ class EditorActivity : AppCompatActivity() {
         saveRunnable?.let { saveHandler.removeCallbacks(it) }
     }
 
-    private enum class SyncStatus {
-        SYNCED, SYNCING, PENDING, ERROR
-    }
-
-
+    private enum class SyncStatus { SYNCED, SYNCING, PENDING, ERROR }
 }
