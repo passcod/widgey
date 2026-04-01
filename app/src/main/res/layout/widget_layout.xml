@@ -1,23 +1,21 @@
-<?xml version="1.0" encoding="utf-8" ?>
-<FrameLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?android:attr/colorBackground"
     android:padding="8dp"
->
+    android:fadeScrollbars="true"
+    android:scrollbars="none">
 
     <TextView
         android:id="@+id/widget_text"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:ellipsize="end"
+        android:layout_height="wrap_content"
         android:gravity="top|start"
         android:textColor="?android:attr/textColorPrimary"
         android:textSize="18sp"
         android:fontFamily="sans-serif"
-        android:lineSpacingMultiplier="1.0"
-    />
+        android:lineSpacingMultiplier="1.0" />
 
-</FrameLayout>
+</ScrollView>
