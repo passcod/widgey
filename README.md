@@ -2,6 +2,8 @@
 
 A lightweight Android widget for viewing and editing Workflowy notes.
 
+Download: <https://github.com/passcod/widgey/releases>
+
 ## Features
 
 - **Offline-first**: All reads and writes operate on local cache instantly. Network sync happens transparently in the background.
