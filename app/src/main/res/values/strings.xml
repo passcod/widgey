@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <resources>
     <string name="app_name">Widgey</string>
+    <string name="app_name_settings">Widgey Settings</string>
     <string name="widget_name">Workflowy Note</string>
     <string name="widget_description">Display and edit a Workflowy note</string>
 
