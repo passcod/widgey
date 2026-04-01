@@ -264,7 +264,7 @@ class NodeRepository(
                 // Fetch updated node to get new modifiedAt
                 when (val fetchResult = api.getNode(nodeId)) {
                     is WorkflowyApi.ApiResult.Success -> {
-                        nodeDao.markSynced(nodeId, fetchResult.data.modifiedAt)
+                        nodeDao.markSynced(nodeId, fetchResult.data.modifiedAt ?: System.currentTimeMillis())
                     }
                     else -> {
                         Log.w(TAG, "pushNode: push succeeded but couldn't fetch updated timestamp for $nodeId")
