@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Widgey</string>
+    <string name="widget_name">Workflowy Note</string>
+    <string name="widget_description">Display and edit a Workflowy note</string>
+
+    <!-- Widget states -->
+    <string name="widget_empty">Tap to configure</string>
+    <string name="widget_no_api_key">API key required</string>
+    <string name="widget_discarded">Note discarded\nRemove widget</string>
+
+    <!-- API Key Activity -->
+    <string name="api_key_title">Workflowy API Key</string>
+    <string name="api_key_hint">Paste your API key</string>
+    <string name="api_key_instructions">Get your API key from workflowy.com/api-reference</string>
+    <string name="api_key_validate">Validate &amp; Save</string>
+    <string name="api_key_validating">Validating…</string>
+    <string name="api_key_invalid">Invalid API key</string>
+    <string name="api_key_success">API key saved</string>
+    <string name="api_key_clear">Clear API Key</string>
+    <string name="api_key_clear_confirm">Clear API key? All widgets will show an error until a new key is entered.</string>
+
+    <!-- Node Selection -->
+    <string name="node_selection_title">Select Note</string>
+    <string name="node_selection_empty">No top-level nodes</string>
+    <string name="node_selection_loading">Loading…</string>
+    <string name="node_selection_error">Failed to load nodes</string>
+    <string name="node_selection_retry">Retry</string>
+    <string name="node_create">Create New</string>
+    <string name="node_create_title">Create Node</string>
+    <string name="node_create_hint">Node name</string>
+    <string name="node_id_advanced">Advanced: Enter Node ID</string>
+    <string name="node_id_hint">Node UUID</string>
+    <string name="node_id_invalid">Invalid node ID</string>
+
+    <!-- Editor -->
+    <string name="editor_title">Edit Note</string>
+    <string name="editor_hint">Write your note…</string>
+    <string name="editor_sync_status_synced">Synced</string>
+    <string name="editor_sync_status_syncing">Syncing…</string>
+    <string name="editor_sync_status_pending">Pending sync</string>
+    <string name="editor_sync_status_error">Sync error</string>
+
+    <!-- Deleted node dialog -->
+    <string name="node_deleted_title">Note Deleted</string>
+    <string name="node_deleted_message">This note was deleted from Workflowy.</string>
+    <string name="node_deleted_recreate">Re-create at Root</string>
+    <string name="node_deleted_discard">Discard</string>
+    <string name="node_deleted_discard_confirm">Discard this note? The widget will become empty.</string>
+
+    <!-- Common -->
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="error_network">Network error</string>
+    <string name="error_unknown">Something went wrong</string>
+</resources>

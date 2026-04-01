@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Widgey" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/postit_yellow</item>
+        <item name="colorPrimaryContainer">@color/postit_yellow</item>
+        <item name="colorOnPrimary">@color/black</item>
+        <item name="colorOnPrimaryContainer">@color/black</item>
+        <item name="colorSecondary">@color/postit_yellow</item>
+        <item name="colorOnSecondary">@color/black</item>
+        <item name="colorSurface">@color/postit_yellow</item>
+        <item name="colorOnSurface">@color/black</item>
+        <item name="colorSurfaceVariant">@color/postit_yellow_dark</item>
+        <item name="colorOnSurfaceVariant">@color/black</item>
+        <item name="android:colorBackground">@color/postit_yellow</item>
+        <item name="colorOnBackground">@color/black</item>
+        <item name="android:windowBackground">@color/postit_yellow</item>
+        <item name="android:statusBarColor">@color/postit_yellow_dark</item>
+        <item name="android:navigationBarColor">@color/postit_yellow</item>
+        <item name="android:textColor">@color/black</item>
+        <item name="android:textColorPrimary">@color/black</item>
+        <item name="android:textColorSecondary">@color/black_secondary</item>
+    </style>
+
+    <style name="Theme.Widgey.Widget" parent="">
+        <item name="android:background">@color/postit_yellow</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+</resources>

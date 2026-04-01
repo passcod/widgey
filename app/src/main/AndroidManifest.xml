@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <application
+        android:name=".WidgeyApp"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Widgey">
+
+        <!-- Widget Provider -->
+        <receiver
+            android:name=".widget.WidgeyProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info" />
+        </receiver>
+
+        <!-- Widget Configuration Activity -->
+        <activity
+            android:name=".widget.WidgetConfigActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Widgey">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
+        <!-- API Key Activity -->
+        <activity
+            android:name=".ui.apikey.ApiKeyActivity"
+            android:exported="true"
+            android:label="@string/api_key_title"
+            android:theme="@style/Theme.Widgey">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Node Selection Activity -->
+        <activity
+            android:name=".ui.nodeselection.NodeSelectionActivity"
+            android:exported="false"
+            android:label="@string/node_selection_title"
+            android:theme="@style/Theme.Widgey" />
+
+        <!-- Editor Activity -->
+        <activity
+            android:name=".ui.editor.EditorActivity"
+            android:exported="false"
+            android:label="@string/editor_title"
+            android:theme="@style/Theme.Widgey"
+            android:windowSoftInputMode="adjustResize" />
+
+    </application>
+
+</manifest>
