@@ -39,6 +39,7 @@ class WidgeyApp : Application(), Configuration.Provider {
         nodeRepository = NodeRepository(
             nodeDao = database.nodeDao(),
             syncQueueDao = database.syncQueueDao(),
+            widgetConfigDao = database.widgetConfigDao(),
             api = api
         )
     }

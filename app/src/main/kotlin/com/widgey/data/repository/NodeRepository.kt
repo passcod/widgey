@@ -4,6 +4,7 @@ import android.util.Log
 import com.widgey.data.api.WorkflowyApi
 import com.widgey.data.db.NodeDao
 import com.widgey.data.db.SyncQueueDao
+import com.widgey.data.db.WidgetConfigDao
 import com.widgey.data.entity.NodeEntity
 import com.widgey.data.entity.SyncQueueEntity
 import kotlinx.coroutines.flow.Flow
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.Flow
 class NodeRepository(
     private val nodeDao: NodeDao,
     private val syncQueueDao: SyncQueueDao,
+    private val widgetConfigDao: WidgetConfigDao,
     private val api: WorkflowyApi
 ) {
     companion object {
@@ -160,7 +162,7 @@ class NodeRepository(
                         completedAt = dto.completedAt
                     )
                 }
-                // Only insert nodes that don't exist locally or aren't dirty
+                // Insert new nodes or update existing ones
                 for (node in nodes) {
                     val existing = nodeDao.getById(node.id)
                     if (existing == null) {
@@ -175,6 +177,20 @@ class NodeRepository(
                         }
                     }
                 }
+
+                // Delete cached top-level nodes that no longer exist on the server,
+                // but spare any that are currently configured as a widget (they get
+                // their own 404 handling via the editor's checkNodeExistsRemotely).
+                val apiIds = nodes.map { it.id }.toSet()
+                val widgetNodeIds = widgetConfigDao.getAllNodeIds().toSet()
+                val cachedTopLevel = nodeDao.getTopLevelNodes()
+                for (cached in cachedTopLevel) {
+                    if (cached.id !in apiIds && cached.id !in widgetNodeIds) {
+                        Log.d(TAG, "fetchTopLevelNodes: deleting stale node ${cached.id} (${cached.name})")
+                        nodeDao.deleteById(cached.id)
+                    }
+                }
+
                 FetchResult.Success
             }
             is WorkflowyApi.ApiResult.NotFound -> {
