@@ -19,6 +19,9 @@
     <string name="api_key_success">API key saved</string>
     <string name="api_key_clear">Clear API Key</string>
     <string name="api_key_clear_confirm">Clear API key? All widgets will show an error until a new key is entered.</string>
+    <string name="api_key_set_title">Workflowy API Key</string>
+    <string name="api_key_set_instructions">An API key is already configured. You can clear it or change it.</string>
+    <string name="api_key_change">Change API Key</string>
 
     <!-- Node Selection -->
     <string name="node_selection_title">Select Note</string>

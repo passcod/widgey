@@ -38,7 +38,11 @@ class ApiKeyActivity : AppCompatActivity() {
         )
 
         setupUI()
-        loadExistingKey()
+        if (isFromWidgetConfig) {
+            loadExistingKey()
+        } else {
+            loadStandaloneState()
+        }
     }
 
     private fun setupUI() {
@@ -53,6 +57,10 @@ class ApiKeyActivity : AppCompatActivity() {
 
         binding.clearButton.setOnClickListener {
             showClearConfirmation()
+        }
+
+        binding.changeButton.setOnClickListener {
+            showEntryForm()
         }
 
         binding.apiKeyInput.setOnFocusChangeListener { _, hasFocus ->
@@ -72,6 +80,35 @@ class ApiKeyActivity : AppCompatActivity() {
                 binding.apiKeyInput.hint = "••••••••••••••••"
             }
         }
+    }
+
+    private fun loadStandaloneState() {
+        lifecycleScope.launch {
+            val hasKey = app.settingsRepository.hasApiKey()
+            if (hasKey) {
+                showManagementUI()
+            } else {
+                showEntryForm()
+            }
+        }
+    }
+
+    private fun showManagementUI() {
+        binding.titleText.text = getString(R.string.api_key_set_title)
+        binding.instructionsText.text = getString(R.string.api_key_set_instructions)
+        binding.apiKeyInputLayout.visibility = View.GONE
+        binding.validateButton.visibility = View.GONE
+        binding.changeButton.visibility = View.VISIBLE
+        binding.clearButton.visibility = View.VISIBLE
+    }
+
+    private fun showEntryForm() {
+        binding.titleText.text = getString(R.string.api_key_title)
+        binding.instructionsText.text = getString(R.string.api_key_instructions)
+        binding.apiKeyInputLayout.visibility = View.VISIBLE
+        binding.validateButton.visibility = View.VISIBLE
+        binding.changeButton.visibility = View.GONE
+        binding.clearButton.visibility = View.GONE
     }
 
     private fun validateAndSaveKey(apiKey: String) {
