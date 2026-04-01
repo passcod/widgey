@@ -94,7 +94,7 @@ class NodeRepository(
                             note = dto.note,
                             parentId = dto.parentId,
                             priority = dto.priority,
-                            remoteModifiedAt = dto.modifiedAt,
+                            remoteModifiedAt = dto.modifiedAt ?: 0,
                             localModifiedAt = null,
                             isDirty = false
                         )
@@ -103,7 +103,7 @@ class NodeRepository(
                     // Local changes exist - keep them, but update remote timestamp
                     // Only update from remote if remote is newer AND local hasn't been modified more recently
                     val localModTime = existing.localModifiedAt ?: 0
-                    if (dto.modifiedAt > localModTime) {
+                    if ((dto.modifiedAt ?: 0) > localModTime) {
                         // Remote is newer than our local edit, but we still keep local
                         // because user intent should be preserved
                         // Just update the remote timestamp so we know what we're overwriting
@@ -111,8 +111,8 @@ class NodeRepository(
                     // Don't update content, keep local changes
                 } else {
                     // No local changes, safe to update from remote
-                    if (dto.modifiedAt > existing.remoteModifiedAt) {
-                        nodeDao.updateFromRemote(nodeId, dto.note, dto.modifiedAt)
+                    if ((dto.modifiedAt ?: 0) > existing.remoteModifiedAt) {
+                        nodeDao.updateFromRemote(nodeId, dto.note, dto.modifiedAt ?: 0)
                     }
                 }
                 FetchResult.Success
@@ -151,7 +151,7 @@ class NodeRepository(
                         note = dto.note,
                         parentId = dto.parentId,
                         priority = dto.priority,
-                        remoteModifiedAt = dto.modifiedAt,
+                        remoteModifiedAt = dto.modifiedAt ?: 0,
                         localModifiedAt = null,
                         isDirty = false
                     )
@@ -210,7 +210,7 @@ class NodeRepository(
                                 note = dto.note,
                                 parentId = dto.parentId,
                                 priority = dto.priority,
-                                remoteModifiedAt = dto.modifiedAt,
+                                remoteModifiedAt = dto.modifiedAt ?: 0,
                                 localModifiedAt = null,
                                 isDirty = false
                             )

@@ -13,7 +13,7 @@ data class NodeDto(
     val priority: Int = 0,
     val data: NodeDataDto? = null,
     val createdAt: Long = 0,
-    val modifiedAt: Long = 0,
+    val modifiedAt: Long? = null,
     val completedAt: Long? = null
 )
 
