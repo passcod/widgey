@@ -1,5 +1,6 @@
 package com.widgey.data.api
 
+import android.util.Log
 import com.widgey.data.api.dto.CreateNodeResponse
 import com.widgey.data.api.dto.NodeDto
 import com.widgey.data.api.dto.NodesListResponse
@@ -33,6 +34,7 @@ class WorkflowyApi(
     private val jsonMediaType = "application/json".toMediaType()
 
     companion object {
+        private const val TAG = "WorkflowyApi"
         private const val BASE_URL = "https://workflowy.com/api/v1"
     }
 
@@ -48,31 +50,50 @@ class WorkflowyApi(
         request: Request,
         parseResponse: (String) -> T
     ): ApiResult<T> = withContext(Dispatchers.IO) {
+        val url = request.url.toString()
+        Log.d(TAG, "--> ${request.method} $url")
         try {
             val response = client.newCall(request).execute()
             val body = response.body?.string() ?: ""
+            Log.d(TAG, "<-- ${response.code} $url (${body.length} bytes)")
 
             when (response.code) {
                 200, 201 -> {
                     try {
                         ApiResult.Success(parseResponse(body))
                     } catch (e: Exception) {
+                        Log.e(TAG, "<-- Parse error $url: ${e.message}\nBody: $body", e)
                         ApiResult.Error(response.code, "Failed to parse response: ${e.message}")
                     }
                 }
-                401 -> ApiResult.Unauthorized
-                404 -> ApiResult.NotFound
-                else -> ApiResult.Error(response.code, body)
+                401 -> {
+                    Log.w(TAG, "<-- 401 Unauthorized $url")
+                    ApiResult.Unauthorized
+                }
+                404 -> {
+                    Log.w(TAG, "<-- 404 Not Found $url")
+                    ApiResult.NotFound
+                }
+                else -> {
+                    Log.e(TAG, "<-- ${response.code} Error $url\nBody: $body")
+                    ApiResult.Error(response.code, body)
+                }
             }
         } catch (e: IOException) {
+            Log.e(TAG, "<-- Network error $url: ${e.message}", e)
             ApiResult.NetworkError(e)
         } catch (e: Exception) {
+            Log.e(TAG, "<-- Unexpected error $url: ${e.message}", e)
             ApiResult.NetworkError(IOException(e.message, e))
         }
     }
 
     private suspend fun buildAuthorizedRequest(url: String): Request.Builder? {
-        val apiKey = getApiKey() ?: return null
+        val apiKey = getApiKey()
+        if (apiKey == null) {
+            Log.w(TAG, "buildAuthorizedRequest: no API key set")
+            return null
+        }
         return Request.Builder()
             .url(url)
             .header("Authorization", "Bearer $apiKey")

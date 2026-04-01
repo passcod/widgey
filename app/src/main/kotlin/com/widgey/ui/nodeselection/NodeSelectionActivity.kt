@@ -2,6 +2,7 @@ package com.widgey.ui.nodeselection
 
 import android.appwidget.AppWidgetManager
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.Toast
@@ -20,6 +21,10 @@ import com.widgey.widget.WidgetUpdater
 import kotlinx.coroutines.launch
 
 class NodeSelectionActivity : AppCompatActivity() {
+
+    companion object {
+        private const val TAG = "NodeSelectionActivity"
+    }
 
     private lateinit var binding: ActivityNodeSelectionBinding
     private lateinit var adapter: NodeListAdapter
@@ -88,32 +93,48 @@ class NodeSelectionActivity : AppCompatActivity() {
         showLoading()
 
         lifecycleScope.launch {
+            Log.d(TAG, "loadNodes: starting, appWidgetId=$appWidgetId")
+
             // First try to load from cache
             val cachedNodes = app.nodeRepository.getTopLevelNodes()
+            Log.d(TAG, "loadNodes: cache has ${cachedNodes.size} top-level nodes")
             if (cachedNodes.isNotEmpty()) {
                 showNodes(cachedNodes)
             }
 
             // Then fetch from API
+            Log.d(TAG, "loadNodes: fetching from API")
             when (val result = app.nodeRepository.fetchTopLevelNodes()) {
                 is NodeRepository.FetchResult.Success -> {
                     val nodes = app.nodeRepository.getTopLevelNodes()
+                    Log.d(TAG, "loadNodes: API fetch succeeded, now have ${nodes.size} nodes")
                     showNodes(nodes)
                 }
 
                 is NodeRepository.FetchResult.Unauthorized -> {
+                    Log.w(TAG, "loadNodes: API returned Unauthorized - API key missing or invalid")
                     if (cachedNodes.isEmpty()) {
                         showError(getString(R.string.widget_no_api_key))
                     }
                 }
 
                 is NodeRepository.FetchResult.NetworkError -> {
+                    val r = result as NodeRepository.FetchResult.NetworkError
+                    Log.e(TAG, "loadNodes: network error", r.exception)
                     if (cachedNodes.isEmpty()) {
                         showError(getString(R.string.error_network))
                     }
                 }
 
-                else -> {
+                is NodeRepository.FetchResult.NotFound -> {
+                    Log.e(TAG, "loadNodes: API returned NotFound for top-level nodes")
+                    if (cachedNodes.isEmpty()) {
+                        showError(getString(R.string.node_selection_error))
+                    }
+                }
+
+                is NodeRepository.FetchResult.Error -> {
+                    Log.e(TAG, "loadNodes: API error: ${result.message}")
                     if (cachedNodes.isEmpty()) {
                         showError(getString(R.string.node_selection_error))
                     }
@@ -180,22 +201,33 @@ class NodeSelectionActivity : AppCompatActivity() {
         binding.nodeIdSubmitButton.isEnabled = false
 
         lifecycleScope.launch {
+            Log.d(TAG, "validateAndSelectNodeId: fetching node $nodeId")
             when (val result = app.nodeRepository.fetchNode(nodeId)) {
                 is NodeRepository.FetchResult.Success -> {
+                    Log.d(TAG, "validateAndSelectNodeId: node $nodeId found, selecting")
                     selectNode(nodeId)
                 }
 
                 is NodeRepository.FetchResult.NotFound -> {
+                    Log.w(TAG, "validateAndSelectNodeId: node $nodeId not found")
                     binding.nodeIdInputLayout.error = getString(R.string.node_id_invalid)
                     binding.nodeIdSubmitButton.isEnabled = true
                 }
 
                 is NodeRepository.FetchResult.Unauthorized -> {
+                    Log.w(TAG, "validateAndSelectNodeId: unauthorized")
                     binding.nodeIdInputLayout.error = getString(R.string.widget_no_api_key)
                     binding.nodeIdSubmitButton.isEnabled = true
                 }
 
-                else -> {
+                is NodeRepository.FetchResult.NetworkError -> {
+                    Log.e(TAG, "validateAndSelectNodeId: network error", result.exception)
+                    binding.nodeIdInputLayout.error = getString(R.string.error_network)
+                    binding.nodeIdSubmitButton.isEnabled = true
+                }
+
+                is NodeRepository.FetchResult.Error -> {
+                    Log.e(TAG, "validateAndSelectNodeId: error: ${result.message}")
                     binding.nodeIdInputLayout.error = getString(R.string.error_network)
                     binding.nodeIdSubmitButton.isEnabled = true
                 }

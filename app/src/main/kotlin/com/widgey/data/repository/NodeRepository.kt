@@ -1,5 +1,6 @@
 package com.widgey.data.repository
 
+import android.util.Log
 import com.widgey.data.api.WorkflowyApi
 import com.widgey.data.db.NodeDao
 import com.widgey.data.db.SyncQueueDao
@@ -12,6 +13,9 @@ class NodeRepository(
     private val syncQueueDao: SyncQueueDao,
     private val api: WorkflowyApi
 ) {
+    companion object {
+        private const val TAG = "NodeRepository"
+    }
     /**
      * Get a node by ID from local cache
      */
@@ -74,10 +78,12 @@ class NodeRepository(
      * Returns true if the node exists, false if not found
      */
     suspend fun fetchNode(nodeId: String): FetchResult {
+        Log.d(TAG, "fetchNode: nodeId=$nodeId")
         return when (val result = api.getNode(nodeId)) {
             is WorkflowyApi.ApiResult.Success -> {
                 val dto = result.data
                 val existing = nodeDao.getById(nodeId)
+                Log.d(TAG, "fetchNode: success, existing=${existing != null}, isDirty=${existing?.isDirty}")
 
                 if (existing == null) {
                     // New node, just insert
@@ -111,10 +117,22 @@ class NodeRepository(
                 }
                 FetchResult.Success
             }
-            is WorkflowyApi.ApiResult.NotFound -> FetchResult.NotFound
-            is WorkflowyApi.ApiResult.Unauthorized -> FetchResult.Unauthorized
-            is WorkflowyApi.ApiResult.Error -> FetchResult.Error(result.message)
-            is WorkflowyApi.ApiResult.NetworkError -> FetchResult.NetworkError(result.exception)
+            is WorkflowyApi.ApiResult.NotFound -> {
+                Log.w(TAG, "fetchNode: nodeId=$nodeId not found on server")
+                FetchResult.NotFound
+            }
+            is WorkflowyApi.ApiResult.Unauthorized -> {
+                Log.w(TAG, "fetchNode: unauthorized")
+                FetchResult.Unauthorized
+            }
+            is WorkflowyApi.ApiResult.Error -> {
+                Log.e(TAG, "fetchNode: API error ${result.code}: ${result.message}")
+                FetchResult.Error(result.message)
+            }
+            is WorkflowyApi.ApiResult.NetworkError -> {
+                Log.e(TAG, "fetchNode: network error", result.exception)
+                FetchResult.NetworkError(result.exception)
+            }
         }
     }
 
@@ -122,8 +140,10 @@ class NodeRepository(
      * Fetch top-level nodes from the API and update local cache
      */
     suspend fun fetchTopLevelNodes(): FetchResult {
+        Log.d(TAG, "fetchTopLevelNodes: fetching from API")
         return when (val result = api.getTopLevelNodes()) {
             is WorkflowyApi.ApiResult.Success -> {
+                Log.d(TAG, "fetchTopLevelNodes: got ${result.data.size} nodes from API")
                 val nodes = result.data.map { dto ->
                     NodeEntity(
                         id = dto.id,
@@ -140,17 +160,33 @@ class NodeRepository(
                 for (node in nodes) {
                     val existing = nodeDao.getById(node.id)
                     if (existing == null) {
+                        Log.d(TAG, "fetchTopLevelNodes: inserting new node ${node.id} (${node.name})")
                         nodeDao.insert(node)
                     } else if (!existing.isDirty && node.remoteModifiedAt > existing.remoteModifiedAt) {
+                        Log.d(TAG, "fetchTopLevelNodes: updating node ${node.id} from remote")
                         nodeDao.updateFromRemote(node.id, node.note, node.remoteModifiedAt)
+                    } else {
+                        Log.d(TAG, "fetchTopLevelNodes: skipping node ${node.id} (isDirty=${existing.isDirty}, remoteModifiedAt unchanged=${node.remoteModifiedAt <= existing.remoteModifiedAt})")
                     }
                 }
                 FetchResult.Success
             }
-            is WorkflowyApi.ApiResult.NotFound -> FetchResult.NotFound
-            is WorkflowyApi.ApiResult.Unauthorized -> FetchResult.Unauthorized
-            is WorkflowyApi.ApiResult.Error -> FetchResult.Error(result.message)
-            is WorkflowyApi.ApiResult.NetworkError -> FetchResult.NetworkError(result.exception)
+            is WorkflowyApi.ApiResult.NotFound -> {
+                Log.w(TAG, "fetchTopLevelNodes: not found")
+                FetchResult.NotFound
+            }
+            is WorkflowyApi.ApiResult.Unauthorized -> {
+                Log.w(TAG, "fetchTopLevelNodes: unauthorized")
+                FetchResult.Unauthorized
+            }
+            is WorkflowyApi.ApiResult.Error -> {
+                Log.e(TAG, "fetchTopLevelNodes: API error ${result.code}: ${result.message}")
+                FetchResult.Error(result.message)
+            }
+            is WorkflowyApi.ApiResult.NetworkError -> {
+                Log.e(TAG, "fetchTopLevelNodes: network error", result.exception)
+                FetchResult.NetworkError(result.exception)
+            }
         }
     }
 
@@ -158,9 +194,11 @@ class NodeRepository(
      * Create a new top-level node
      */
     suspend fun createTopLevelNode(name: String, note: String? = null): CreateResult {
+        Log.d(TAG, "createTopLevelNode: name=$name")
         return when (val result = api.createNode(parentId = null, name = name, note = note)) {
             is WorkflowyApi.ApiResult.Success -> {
                 val nodeId = result.data
+                Log.d(TAG, "createTopLevelNode: created nodeId=$nodeId, fetching details")
                 // Fetch the created node to get full details
                 when (val fetchResult = api.getNode(nodeId)) {
                     is WorkflowyApi.ApiResult.Success -> {
@@ -209,31 +247,49 @@ class NodeRepository(
      * Push local changes to the server
      */
     suspend fun pushNode(nodeId: String): PushResult {
-        val node = nodeDao.getById(nodeId) ?: return PushResult.NotFound
+        val node = nodeDao.getById(nodeId) ?: run {
+            Log.w(TAG, "pushNode: nodeId=$nodeId not found in local DB")
+            return PushResult.NotFound
+        }
 
         if (!node.isDirty) {
+            Log.d(TAG, "pushNode: nodeId=$nodeId is not dirty, skipping")
             return PushResult.Success
         }
 
+        Log.d(TAG, "pushNode: pushing nodeId=$nodeId, note length=${node.note?.length ?: 0}")
         return when (val result = api.updateNode(nodeId, note = node.note)) {
             is WorkflowyApi.ApiResult.Success -> {
+                Log.d(TAG, "pushNode: push succeeded for nodeId=$nodeId")
                 // Fetch updated node to get new modifiedAt
                 when (val fetchResult = api.getNode(nodeId)) {
                     is WorkflowyApi.ApiResult.Success -> {
                         nodeDao.markSynced(nodeId, fetchResult.data.modifiedAt)
                     }
                     else -> {
-                        // Push succeeded but couldn't fetch - mark synced with current time
+                        Log.w(TAG, "pushNode: push succeeded but couldn't fetch updated timestamp for $nodeId")
                         nodeDao.markSynced(nodeId, System.currentTimeMillis())
                     }
                 }
                 syncQueueDao.deleteByNodeId(nodeId)
                 PushResult.Success
             }
-            is WorkflowyApi.ApiResult.NotFound -> PushResult.NotFound
-            is WorkflowyApi.ApiResult.Unauthorized -> PushResult.Unauthorized
-            is WorkflowyApi.ApiResult.Error -> PushResult.Error(result.message)
-            is WorkflowyApi.ApiResult.NetworkError -> PushResult.NetworkError(result.exception)
+            is WorkflowyApi.ApiResult.NotFound -> {
+                Log.w(TAG, "pushNode: nodeId=$nodeId not found on server")
+                PushResult.NotFound
+            }
+            is WorkflowyApi.ApiResult.Unauthorized -> {
+                Log.w(TAG, "pushNode: unauthorized")
+                PushResult.Unauthorized
+            }
+            is WorkflowyApi.ApiResult.Error -> {
+                Log.e(TAG, "pushNode: API error ${result.code}: ${result.message}")
+                PushResult.Error(result.message)
+            }
+            is WorkflowyApi.ApiResult.NetworkError -> {
+                Log.e(TAG, "pushNode: network error", result.exception)
+                PushResult.NetworkError(result.exception)
+            }
         }
     }
 
