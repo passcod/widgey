@@ -303,55 +303,55 @@ dependencies {
 
 ## Implementation Phases
 
-### Phase 1: Project Foundation
-- [ ] Project setup with Gradle (Kotlin DSL)
-- [ ] AndroidManifest with permissions and components
-- [ ] Room database with all entities and DAOs
-- [ ] WorkflowyApi client with OkHttp
-- [ ] SettingsRepository for API key storage
-- [ ] Colors, themes, and basic resources
+### Phase 1: Project Foundation ✅
+- [x] Project setup with Gradle (Kotlin DSL)
+- [x] AndroidManifest with permissions and components
+- [x] Room database with all entities and DAOs
+- [x] WorkflowyApi client with OkHttp
+- [x] SettingsRepository for API key storage
+- [x] Colors, themes, and basic resources
 
-### Phase 2: Widget Basics
-- [ ] WidgeyProvider (AppWidgetProvider)
-- [ ] widget_layout.xml with RemoteViews
-- [ ] widget_info.xml metadata
-- [ ] WidgetUpdater helper
-- [ ] WidgetConfigActivity skeleton
-- [ ] Widget preview drawable
+### Phase 2: Widget Basics ✅
+- [x] WidgeyProvider (AppWidgetProvider)
+- [x] widget_layout.xml with RemoteViews
+- [x] widget_info.xml metadata
+- [x] WidgetUpdater helper
+- [x] WidgetConfigActivity skeleton
+- [x] Widget preview drawable
 
-### Phase 3: API Key Flow
-- [ ] ApiKeyActivity UI
-- [ ] API key validation (test with /api/v1/targets)
-- [ ] Error states when key missing/invalid
+### Phase 3: API Key Flow ✅
+- [x] ApiKeyActivity UI
+- [x] API key validation (test with /api/v1/targets)
+- [x] Error states when key missing/invalid
 
-### Phase 4: Node Selection
-- [ ] NodeSelectionActivity layout
-- [ ] NodeListAdapter for RecyclerView
-- [ ] Fetch top-level nodes from API
-- [ ] Create new node dialog
-- [ ] Manual node ID entry
-- [ ] Integration with widget configuration
+### Phase 4: Node Selection ✅
+- [x] NodeSelectionActivity layout
+- [x] NodeListAdapter for RecyclerView
+- [x] Fetch top-level nodes from API
+- [x] Create new node dialog
+- [x] Manual node ID entry
+- [x] Integration with widget configuration
 
-### Phase 5: Editor
-- [ ] EditorActivity layout
-- [ ] EditorViewModel
-- [ ] Load node content from local DB
-- [ ] Auto-save with debounce (500ms)
-- [ ] Sync status indicator
-- [ ] Deleted node handling (re-create or discard dialog)
+### Phase 5: Editor ✅
+- [x] EditorActivity layout
+- [x] EditorViewModel (simplified - logic in Activity)
+- [x] Load node content from local DB
+- [x] Auto-save with debounce (500ms)
+- [x] Sync status indicator
+- [x] Deleted node handling (re-create or discard dialog)
 
-### Phase 6: Sync Engine
-- [ ] SyncManager with push/pull logic
-- [ ] SyncWorker for push with retry backoff
-- [ ] PeriodicSyncWorker (60s interval)
-- [ ] NetworkMonitor for connectivity changes
-- [ ] Conflict resolution (timestamp comparison)
-- [ ] Widget refresh after sync
+### Phase 6: Sync Engine ✅
+- [x] SyncManager with push/pull logic
+- [x] SyncWorker for push with retry backoff
+- [x] PeriodicSyncWorker (60s interval)
+- [x] NetworkMonitor for connectivity changes
+- [x] Conflict resolution (timestamp comparison)
+- [x] Widget refresh after sync
 
-### Phase 7: Polish
-- [ ] App icon (yellow adaptive icon)
-- [ ] Edge cases and error handling
-- [ ] ProGuard/R8 rules
+### Phase 7: Polish ✅
+- [x] App icon (yellow adaptive icon)
+- [x] Edge cases and error handling
+- [x] ProGuard/R8 rules
 - [ ] Final testing
 
 ## API Reference
