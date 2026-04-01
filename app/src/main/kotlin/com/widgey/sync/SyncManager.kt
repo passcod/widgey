@@ -11,6 +11,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.widgey.WidgeyApp
 import com.widgey.data.repository.NodeRepository
+import com.widgey.widget.WidgetUpdater
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
@@ -129,6 +130,10 @@ class SyncManager(private val context: Context) {
                 }
                 else -> errorCount++
             }
+        }
+
+        if (successCount > 0) {
+            WidgetUpdater.updateAllWidgets(context)
         }
 
         if (errorCount > 0) {

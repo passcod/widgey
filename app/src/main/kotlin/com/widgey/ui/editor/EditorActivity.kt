@@ -70,6 +70,7 @@ class EditorActivity : AppCompatActivity() {
     }
 
     private fun setupUI() {
+        binding.noteInput.movementMethod = android.text.method.LinkMovementMethod.getInstance()
         binding.noteInput.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
@@ -185,16 +186,20 @@ class EditorActivity : AppCompatActivity() {
                     // Re-read from DB; if remote was newer and we have no local edits,
                     // refresh the editor content without triggering another save
                     val updated = app.database.nodeDao().getById(currentNodeId)
-                    if (updated != null && !updated.isDirty) {
-                        val currentText = HtmlFormatter.toHtml(binding.noteInput.editableText)
-                        if (updated.note != currentText) {
-                            isLoading = true
-                            binding.noteInput.setText(
-                                HtmlFormatter.toSpanned(updated.note),
-                                android.widget.TextView.BufferType.EDITABLE
-                            )
-                            binding.noteInput.setSelection(0)
-                            isLoading = false
+                    if (updated != null) {
+                        binding.nodeTitle.text = HtmlFormatter.stripHtml(updated.name).ifEmpty { getString(R.string.editor_title) }
+                        if (!updated.isDirty) {
+                            val currentText = HtmlFormatter.toHtml(binding.noteInput.editableText)
+                            if (updated.note != currentText) {
+                                isLoading = true
+                                binding.noteInput.setText(
+                                    HtmlFormatter.toSpanned(updated.note),
+                                    android.widget.TextView.BufferType.EDITABLE
+                                )
+                                binding.noteInput.setSelection(0)
+                                isLoading = false
+                                WidgetUpdater.updateWidget(this@EditorActivity, appWidgetId)
+                            }
                         }
                     }
                     updateSyncStatus(SyncStatus.SYNCED)
