@@ -79,6 +79,7 @@ class EditorActivity : AppCompatActivity() {
         })
 
         binding.backButton.setOnClickListener { onBackPressed() }
+        binding.syncStatus.setOnClickListener { syncFromRemote() }
 
         binding.formatBold.setOnClickListener { toggleSpan<StyleSpan> { StyleSpan(Typeface.BOLD) } }
         binding.formatItalic.setOnClickListener { toggleSpan<StyleSpan> { StyleSpan(Typeface.ITALIC) } }
@@ -149,7 +150,7 @@ class EditorActivity : AppCompatActivity() {
                 binding.progressBar.visibility = View.GONE
                 isLoading = false
                 binding.noteInput.setSelection(0)
-                checkNodeExistsRemotely()
+                syncFromRemote()
             } else {
                 when (val result = app.nodeRepository.fetchNode(nodeId!!)) {
                     is NodeRepository.FetchResult.Success -> {
@@ -175,10 +176,31 @@ class EditorActivity : AppCompatActivity() {
         }
     }
 
-    private fun checkNodeExistsRemotely() {
+    private fun syncFromRemote() {
+        val currentNodeId = nodeId ?: return
+        updateSyncStatus(SyncStatus.SYNCING)
         lifecycleScope.launch {
-            if (!app.nodeRepository.nodeExistsRemotely(nodeId!!)) {
-                showNodeDeletedDialog()
+            when (val result = app.nodeRepository.fetchNode(currentNodeId)) {
+                is NodeRepository.FetchResult.Success -> {
+                    // Re-read from DB; if remote was newer and we have no local edits,
+                    // refresh the editor content without triggering another save
+                    val updated = app.database.nodeDao().getById(currentNodeId)
+                    if (updated != null && !updated.isDirty) {
+                        val currentText = HtmlFormatter.toHtml(binding.noteInput.editableText)
+                        if (updated.note != currentText) {
+                            isLoading = true
+                            binding.noteInput.setText(
+                                HtmlFormatter.toSpanned(updated.note),
+                                android.widget.TextView.BufferType.EDITABLE
+                            )
+                            binding.noteInput.setSelection(0)
+                            isLoading = false
+                        }
+                    }
+                    updateSyncStatus(SyncStatus.SYNCED)
+                }
+                is NodeRepository.FetchResult.NotFound -> showNodeDeletedDialog()
+                else -> updateSyncStatus(SyncStatus.ERROR)
             }
         }
     }
