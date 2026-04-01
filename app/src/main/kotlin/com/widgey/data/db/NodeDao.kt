@@ -19,7 +19,7 @@ interface NodeDao {
     @Query("SELECT * FROM nodes WHERE parent_id IS NULL ORDER BY priority ASC")
     suspend fun getTopLevelNodes(): List<NodeEntity>
 
-    @Query("SELECT * FROM nodes WHERE parent_id IS NULL AND completed = 0 ORDER BY priority ASC")
+    @Query("SELECT * FROM nodes WHERE parent_id IS NULL AND completed_at IS NULL ORDER BY priority ASC")
     suspend fun getTopLevelActiveNodes(): List<NodeEntity>
 
     @Query("SELECT * FROM nodes WHERE parent_id IS NULL ORDER BY priority ASC")
@@ -48,6 +48,9 @@ interface NodeDao {
 
     @Query("UPDATE nodes SET note = :note, remote_modified_at = :remoteModifiedAt WHERE id = :id AND is_dirty = 0")
     suspend fun updateFromRemote(id: String, note: String?, remoteModifiedAt: Long)
+
+    @Query("UPDATE nodes SET completed = :completed, completed_at = :completedAt WHERE id = :id")
+    suspend fun updateCompletionStatus(id: String, completed: Boolean, completedAt: Long?)
 
     @Query("UPDATE nodes SET is_dirty = 0, remote_modified_at = :remoteModifiedAt WHERE id = :id")
     suspend fun markSynced(id: String, remoteModifiedAt: Long)

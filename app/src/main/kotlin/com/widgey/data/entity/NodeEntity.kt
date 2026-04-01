@@ -32,5 +32,8 @@ data class NodeEntity(
     val isDirty: Boolean = false,
 
     @ColumnInfo(name = "completed")
-    val completed: Boolean = false
+    val completed: Boolean = false,
+
+    @ColumnInfo(name = "completed_at")
+    val completedAt: Long? = null
 )

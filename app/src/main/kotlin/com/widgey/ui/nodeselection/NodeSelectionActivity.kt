@@ -161,7 +161,7 @@ class NodeSelectionActivity : AppCompatActivity() {
     }
 
     private fun applyFilter() {
-        val filtered = if (showCompleted) allNodes else allNodes.filter { !it.completed }
+        val filtered = if (showCompleted) allNodes else allNodes.filter { it.completedAt == null }
         showNodes(filtered)
     }
 

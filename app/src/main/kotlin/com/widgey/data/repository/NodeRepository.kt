@@ -97,7 +97,8 @@ class NodeRepository(
                             remoteModifiedAt = dto.modifiedAt ?: 0,
                             localModifiedAt = null,
                             isDirty = false,
-                            completed = dto.completed
+                            completed = dto.completed,
+                            completedAt = dto.completedAt
                         )
                     )
                 } else if (existing.isDirty) {
@@ -155,7 +156,8 @@ class NodeRepository(
                         remoteModifiedAt = dto.modifiedAt ?: 0,
                         localModifiedAt = null,
                         isDirty = false,
-                        completed = dto.completed
+                        completed = dto.completed,
+                        completedAt = dto.completedAt
                     )
                 }
                 // Only insert nodes that don't exist locally or aren't dirty
@@ -164,11 +166,13 @@ class NodeRepository(
                     if (existing == null) {
                         Log.d(TAG, "fetchTopLevelNodes: inserting new node ${node.id} (${node.name})")
                         nodeDao.insert(node)
-                    } else if (!existing.isDirty && node.remoteModifiedAt > existing.remoteModifiedAt) {
-                        Log.d(TAG, "fetchTopLevelNodes: updating node ${node.id} from remote")
-                        nodeDao.updateFromRemote(node.id, node.note, node.remoteModifiedAt)
                     } else {
-                        Log.d(TAG, "fetchTopLevelNodes: skipping node ${node.id} (isDirty=${existing.isDirty}, remoteModifiedAt unchanged=${node.remoteModifiedAt <= existing.remoteModifiedAt})")
+                        // Always update completion status — it changes independently of modifiedAt
+                        nodeDao.updateCompletionStatus(node.id, node.completed, node.completedAt)
+                        if (!existing.isDirty && node.remoteModifiedAt > existing.remoteModifiedAt) {
+                            Log.d(TAG, "fetchTopLevelNodes: updating node ${node.id} from remote")
+                            nodeDao.updateFromRemote(node.id, node.note, node.remoteModifiedAt)
+                        }
                     }
                 }
                 FetchResult.Success
@@ -215,7 +219,8 @@ class NodeRepository(
                                 remoteModifiedAt = dto.modifiedAt ?: 0,
                                 localModifiedAt = null,
                                 isDirty = false,
-                                completed = dto.completed
+                                completed = dto.completed,
+                                completedAt = dto.completedAt
                             )
                         )
                         CreateResult.Success(nodeId)
