@@ -46,4 +46,4 @@ A lightweight Android widget for viewing and editing Workflowy notes.
 
 ## License
 
-MIT
+No copyright (AI/machine output).
