@@ -1,0 +1,7 @@
+- This is a single-module Android app (`:app`) with a Workflowy-backed home-screen widget.
+- Treat `minSdk = 31` in `app/build.gradle.kts` as a hard platform baseline.
+- Preserve offline-first behavior: local user edits must not block on network.
+- Preserve the dirty-write rule: remote pulls must not overwrite locally dirty notes.
+- Build: `./gradlew assembleDebug`
+- Unit tests: `./gradlew testDebugUnitTest`
+- Instrumented tests: `./gradlew connectedDebugAndroidTest`
