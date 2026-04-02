@@ -70,7 +70,31 @@ class EditorActivity : AppCompatActivity() {
     }
 
     private fun setupUI() {
-        binding.noteInput.movementMethod = android.text.method.LinkMovementMethod.getInstance()
+        // LinkMovementMethod breaks arrow keys in EditText. We use a touch listener instead.
+        binding.noteInput.setOnTouchListener { v, event ->
+            if (event.action == android.view.MotionEvent.ACTION_UP) {
+                val widget = v as android.widget.TextView
+                var x = event.x.toInt()
+                var y = event.y.toInt()
+
+                x -= widget.totalPaddingLeft
+                y -= widget.totalPaddingTop
+                x += widget.scrollX
+                y += widget.scrollY
+
+                val layout = widget.layout
+                val line = layout.getLineForVertical(y)
+                val off = layout.getOffsetForHorizontal(line, x.toFloat())
+
+                val link = (widget.text as android.text.Spannable).getSpans(off, off, android.text.style.URLSpan::class.java)
+                if (link.isNotEmpty()) {
+                    link[0].onClick(widget)
+                    return@setOnTouchListener true
+                }
+            }
+            false
+        }
+
         binding.noteInput.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
