@@ -1,7 +1,6 @@
 package com.widgey.data.db
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.widgey.data.entity.NodeEntity
@@ -27,9 +26,7 @@ class WidgetConfigDaoTest {
     @Before
     fun setUp() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        database = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
-            .allowMainThreadQueries()
-            .build()
+        database = AppDatabase.inMemory(context)
         widgetConfigDao = database.widgetConfigDao()
         nodeDao = database.nodeDao()
     }
