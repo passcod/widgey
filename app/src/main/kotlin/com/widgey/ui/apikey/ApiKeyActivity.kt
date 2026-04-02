@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -43,6 +44,25 @@ class ApiKeyActivity : AppCompatActivity() {
         } else {
             loadStandaloneState()
         }
+
+        // On API 36+ onBackPressed() is no longer invoked for back gestures.
+        // Register a callback with OnBackPressedDispatcher instead.
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (isFromWidgetConfig) {
+                    lifecycleScope.launch {
+                        if (!app.settingsRepository.hasApiKey()) {
+                            setResult(RESULT_CANCELED)
+                        }
+                        isEnabled = false
+                        onBackPressedDispatcher.onBackPressed()
+                    }
+                } else {
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                }
+            }
+        })
     }
 
     private fun setupUI() {
@@ -189,18 +209,5 @@ class ApiKeyActivity : AppCompatActivity() {
             ).show()
         }
     }
-
-    override fun onBackPressed() {
-        if (isFromWidgetConfig) {
-            // If we came from widget config and no key is set, cancel
-            lifecycleScope.launch {
-                if (!app.settingsRepository.hasApiKey()) {
-                    setResult(RESULT_CANCELED)
-                }
-                super.onBackPressed()
-            }
-        } else {
-            super.onBackPressed()
-        }
-    }
 }
+

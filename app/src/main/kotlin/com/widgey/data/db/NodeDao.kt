@@ -2,6 +2,7 @@ package com.widgey.data.db
 
 import android.content.ContentValues
 import android.database.Cursor
+import androidx.core.database.sqlite.transaction
 import com.widgey.data.entity.NodeEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -72,17 +73,13 @@ class NodeDao internal constructor(
 
     suspend fun insertAll(nodes: List<NodeEntity>) = withContext(Dispatchers.IO) {
         val wdb = db.writableDatabase
-        wdb.beginTransaction()
-        try {
+        wdb.transaction {
             nodes.forEach { node ->
-                wdb.insertWithOnConflict(
+                insertWithOnConflict(
                     "nodes", null, node.toContentValues(),
                     android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE
                 )
             }
-            wdb.setTransactionSuccessful()
-        } finally {
-            wdb.endTransaction()
         }
         changeNotifier.invalidateNodes()
     }
