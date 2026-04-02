@@ -76,6 +76,7 @@
             android:padding="16dp"
             android:scrollbars="vertical"
             android:textSize="16sp"
+            android:textColorLink="@color/editor_links"
             android:lineSpacingMultiplier="1.3"
         />
 

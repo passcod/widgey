@@ -24,6 +24,10 @@
     <color name="widget_background_dark">@color/dark_background</color>
     <color name="widget_text_dark">@color/postit_yellow</color>
 
+    <!-- UI Element colors for Editor -->
+    <color name="editor_cursor">@color/black</color>
+    <color name="editor_links">#2196F3</color>
+
     <!-- Status colors -->
     <color name="sync_success">#4CAF50</color>
     <color name="sync_pending">#FF9800</color>
