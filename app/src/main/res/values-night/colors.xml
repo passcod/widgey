@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <resources>
+    <!-- Widget colors for Dark Mode -->
+    <color name="widget_background">@color/dark_background</color>
+    <color name="widget_text">@color/postit_yellow</color>
+
     <!-- UI Element colors for Editor Dark Mode -->
     <color name="editor_cursor">@color/postit_yellow</color>
     <color name="editor_links">#64B5F6</color>

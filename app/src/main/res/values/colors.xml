@@ -19,10 +19,8 @@
     <color name="text_dark">@color/postit_yellow</color>
 
     <!-- Widget colors -->
-    <color name="widget_background_light">@color/postit_yellow</color>
-    <color name="widget_text_light">@color/black</color>
-    <color name="widget_background_dark">@color/dark_background</color>
-    <color name="widget_text_dark">@color/postit_yellow</color>
+    <color name="widget_background">@color/postit_yellow</color>
+    <color name="widget_text">@color/black</color>
 
     <!-- UI Element colors for Editor -->
     <color name="editor_cursor">@color/black</color>

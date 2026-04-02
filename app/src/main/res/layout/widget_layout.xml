@@ -4,6 +4,7 @@
     android:id="@+id/widget_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/widget_background"
     android:padding="8dp"
 >
 
@@ -21,7 +22,7 @@
         android:id="@+id/widget_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="?android:attr/textColorPrimary"
+        android:textColor="@color/widget_text"
         android:textSize="18sp"
         android:fontFamily="sans-serif"
         android:lineSpacingMultiplier="1.0"
